@@ -13,15 +13,15 @@ const int CW  = 1; // do not change
 #include <Robojax_L298N_DC_motor.h>
 /************************* WiFi Access Point *********************************/
 
-#define WLAN_SSID       "tabassum 2"
-#define WLAN_PASS       "786simmi"
+#define WLAN_SSID       "your internat name"
+#define WLAN_PASS       "your internet password"
 
 /************************* Adafruit.io Setup *********************************/
 
 #define AIO_SERVER      "io.adafruit.com"
 #define AIO_SERVERPORT  1883                   // use 8883 for SSL
-#define AIO_USERNAME  "faizan_tabassum"
-#define AIO_KEY       "aio_UAMz92gqC1kxqpK4qdDrrQHpcJ7A"
+#define AIO_USERNAME  "your username"
+#define AIO_KEY       "your key"
 #define motor 12
 /************ Global State (you don't need to change this!) ******************/
 
