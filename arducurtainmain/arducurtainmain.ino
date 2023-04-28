@@ -7,6 +7,7 @@ int lc = 3;
 int ro = 4;
 int rc = 5;
 int in = 13;
+
 void setup() {
   pinMode(in1, OUTPUT);
   pinMode(in2, OUTPUT);
