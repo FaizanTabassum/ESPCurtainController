@@ -1,16 +1,21 @@
 # ESP32 Automated Curtains Controller using FREERTOS
 
-Automated Curtains Controller is an ESP32-based project that allows you to control curtains automatically using Google Assistant, Alexa, or any platform supported by IFTTT. The system utilizes limit switches and an L298N motor driver to automate the opening and closing of curtains making it a closed loop system.
-The best part is I was able to do all this at a cost of less than 800 Rupees or 10 Dollers
-Ive used FREERTOS to keep the wifi connected and at the same time to monitor the states of the curtains.
+- Automated Curtains Controller is an ESP32-based project that allows you to control curtains automatically using Google Assistant, Alexa, or any platform supported by IFTTT. 
+- The system utilizes limit switches and an L298N motor driver to automate the opening and closing of curtains making it a closed loop system.
+- The best part is I was able to do all this at a cost of less than 800 Rupees or 10 Dollers
+- Ive used FREERTOS to keep the wifi connected and at the same time to monitor the states of the curtains.
+
+  
 The code is designed specific to my curtains as I have 4 sererate curtains for 1 window which made the designing a little complex, however you can easily modify the code to make it run on a single curtain you just have to use 2 limit switches which is easily modifiable in the code.
 
 ![](images/mainimage.jpg)
 
-I had to design my own custom 3D printed mounts to hold the motors 
+- I had to design my own custom 3D printed mounts to hold the motors 
+
 ![](images/20240507_181036.jpg)
 
-And also I Had to design my own pully system to move the string
+- And also I Had to design my own pully system to move the string
+
 ![](images/20240507_181050.jpg)
 
 ## Features
@@ -49,7 +54,9 @@ https://youtu.be/xNAYrOiq-Rw?si=-rBiPlvHksep4d0Q
 
 3. Connect the hardware components according to the pin configurations defined in the code.
    This is how I had to manage the cables, Things will change specific to your case.
+   
  ![](images/20240507_181029.jpg)
+
 
 ## Usage
 
