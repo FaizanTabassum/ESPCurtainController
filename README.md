@@ -1,83 +1,50 @@
-Certainly! Below is a README for your curtain automation project with detailed pin configurations:
+# Automated Curtains Controller
 
----
+Automated Curtains Controller is an ESP32-based project that allows you to control curtains automatically using Google Assistant, Alexa, or any platform supported by IFTTT. The system utilizes limit switches and an L298N motor driver to automate the opening and closing of curtains.
+The best part is I was able to do all this at a cost of less than 800 rupees
+Ive used FREERTOS to keep the wifi connected and at the same time to monitor the states of the curtains.
+The code is designed specific to my curtains as I have 4 sererate curtains for 1 window which made the designing a little complex, however you can easily modify the code to make it run ona single curtain you just have to use 2 limit switches which is easily modifiable in the code.
 
-# Curtain Automation Project README
+## Features
 
-## Overview
+- Control curtains remotely using Google Assistant, Alexa, or other IFTTT-supported platforms.
+- Automatic curtain movement based on limit switch inputs making it reliable as it is closed loop.
+- MQTT connectivity for real-time communication and control.
 
-This project automates curtains using an ESP32 and an Arduino Nano. The ESP32 sends signals to the Arduino Nano, which controls the curtain motors based on feedback from limit switches. Additionally, the curtains can be remotely controlled via Google Assistant using IFTTT integration.
+## Hardware Requirements
 
-## Components
+- ESP32 development board
+- L298N motor driver and generic dc geared motors 100 rpm would be enough, make sure it has enough torque though.
+- Limit switches (left open, left close, right open, right close)
+- Power supply
+- Curtain mechanism (rails, rollers, etc.), for my specific case I had to 3D print my own parts as my curtains didnt have a pulley already attached
 
-- **ESP32:** Sends control signals to the Arduino Nano.
-- **Arduino Nano:** Controls the curtain motors based on signals received from the ESP32 and limit switch feedback.
-- **Limit Switches:** Provide feedback to the Arduino Nano about the curtain position.
-- **IFTTT:** Enables remote control of curtains via Google Assistant.
+## Software Setup
+To configure Adafruit and IFTTT you can refer to this video:
+https://youtu.be/xNAYrOiq-Rw?si=-rBiPlvHksep4d0Q
 
-## Wiring
+1. Install the required libraries or you can directly download from the arduino library manager:
+   - [WiFi.h](https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFi.h)
+   - [Adafruit_MQTT.h](https://github.com/adafruit/Adafruit_MQTT_Library/blob/master/Adafruit_MQTT.h)
+   - [Adafruit_MQTT_Client.h](https://github.com/adafruit/Adafruit_MQTT_Library/blob/master/Adafruit_MQTT_Client.h)
 
-### Arduino Nano
+2. Configure the WiFi and Adafruit.io settings in the code:
+   ```cpp
+   #define WLAN_SSID "Your_WiFi_SSID"
+   #define WLAN_PASS "Your_WiFi_Password"
+   #define AIO_SERVER "io.adafruit.com"
+   #define AIO_SERVERPORT 1883
+   #define AIO_USERNAME "Your_Adafruit_IO_Username"
+   #define AIO_KEY "Your_Adafruit_IO_Key"
+   ```
 
-- **Motor A:**
-  - in1: Pin 12
-  - in2: Pin 11
-
-- **Motor B:**
-  - in3: Pin 10
-  - in4: Pin 9
-
-- **Limit Switches:**
-  - lo: Pin 2
-  - lc: Pin 3
-  - ro: Pin 4
-  - rc: Pin 5
-
-- **Input Pin:**
-  - in: Pin 13
-
-### ESP32
-
-- **Output Pin:**
-  - arduino: Pin 23
-
-### Additional Notes
-
-- Ensure proper power supply for the motors and components.
-
-## Installation
-
-1. **Arduino Nano:**
-   - Upload the provided Arduino Nano code to the board.
-   - Ensure correct wiring based on the pin configurations mentioned.
-
-2. **ESP32:**
-   - Upload the provided ESP32 code to the board.
-   - Update Wi-Fi credentials and Adafruit.io details in the ESP32 code.
-
-3. **IFTTT Integration:**
-   - Create an account on IFTTT.
-   - Set up an applet to link Google Assistant commands to ESP32 actions.
+3. Connect the hardware components according to the pin configurations defined in the code.
 
 ## Usage
 
-1. **Local Control:**
-   - Use the physical switches or buttons connected to the ESP32 to adjust the curtain position.
-   - Ensure proper feedback from limit switches.
-
-2. **Remote Control (IFTTT):**
-   - Set up voice commands on Google Assistant through IFTTT.
-   - Use voice commands to open or close the curtains remotely.
-
-## Customization
-
-- Adjust the Arduino Nano code for different curtain motor types or additional features.
-- Modify the ESP32 code for specific communication protocols or integration with other smart home systems.
-
-## Troubleshooting
-
-- Check wiring, power supply, and communication between the ESP32 and Arduino Nano.
-- Refer to the Arduino IDE serial monitor for debugging messages.
-
----
+1. Upload the code to your ESP32 board.
+2. Open the Serial Monitor to view debug messages.
+3. Ensure that the ESP32 is connected to your WiFi network.
+4. Control the curtains remotely using Google Assistant, Alexa, or other supported platforms via IFTTT.
+5. If you find that some curtains keep running its most likely you did the wiring wrong, just check that.
 
