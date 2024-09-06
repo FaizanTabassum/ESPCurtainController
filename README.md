@@ -1,5 +1,4 @@
 # ESP32 Automated Curtains Controller using FREERTOS
-![IMG-20220912-WA0187](https://github.com/user-attachments/assets/e60744dd-c6a2-4c1b-a0c6-d452ae935945)
 
 
 - Automated Curtains Controller is an ESP32-based project that allows you to control curtains automatically using Google Assistant, Alexa, or any platform supported by IFTTT. 
