@@ -1,197 +1,195 @@
-//Code written by Faizan, Automated curtains can be controlled with google assistant or alexa, whatever is supported by ifttt.
-//These are the pins for the l298n motor drivers
-#define in1 14
-#define in2 27
-#define in3 26
-#define in4 25
+#include "RMaker.h"
+#include "WiFi.h"
+#include "WiFiProv.h"
+#include <wifi_provisioning/manager.h>
 
-//These are the pins for the limit switches
-int lo = 33;     // lo stands for left open
-int lc = 32;     // left close
-int ro = 35;     // right open
-int rc = 34;     // right close
-uint16_t state;  // This is the state variable for curtains
-uint32_t x = 0;
+const char *service_name = "CURTAIN_PROV";
+const char *pop = "123456";
 
-static const BaseType_t pro_cpu = 0;  // these are for multithreading
-static const BaseType_t app_cpu = 1;
+static uint8_t gpio_reset = 0;
+bool wifi_connected = false;
 
-#include <WiFi.h>
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
-/************************* WiFi Access Point *********************************/
+// Motor relay and limit switch pins
+static uint8_t in1 = 19, in2 = 21, in3 = 22, in4 = 23;
+static uint8_t lo = 33, lc = 32, ro = 35, rc = 34;
 
-#define WLAN_SSID "enter your wifi username"
-#define WLAN_PASS "enter your wifi password"
+bool curtain_state = false;
+bool last_curtain_state = false;
+static Switch curtain_switch("Curtain", NULL);
 
-/************************* Adafruit.io Setup *********************************/
+void sysProvEvent(arduino_event_t *sys_event)
+{
+  switch (sys_event->event_id) {
+    case ARDUINO_EVENT_PROV_START:
+      Serial.printf("\n🔵 Provisioning Started with name \"%s\" and PoP \"%s\" on BLE\n", service_name, pop);
+      Serial.println("📱 Scan QR code with ESP RainMaker app:");
+      printQR(service_name, pop, "ble");
+      break;
 
-#define AIO_SERVER "io.adafruit.com"
-#define AIO_SERVERPORT 1883  // use 8883 for SSL
-#define AIO_USERNAME "enter your username"
-#define AIO_KEY "enter your key here"
-/************ Global State (you don't need to change this!) ******************/
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      Serial.println("✅ Connected to Wi-Fi!");
+      wifi_connected = true;
+      break;
 
-// Create an ESP8266 WiFiClient class to connect to the MQTT server.
-WiFiClient client;
-// or... use WiFiClientSecure for SSL
-//WiFiClientSecure client;
+    case ARDUINO_EVENT_PROV_CRED_RECV:
+      Serial.println("📡 Received Wi-Fi credentials");
+      Serial.print("\tSSID: ");
+      Serial.println((const char *) sys_event->event_info.prov_cred_recv.ssid);
+      break;
 
-// Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-
-/****************************** Feeds ***************************************/
-
-// Setup a feed called 'photocell' for publishing.
-// Notice MQTT paths for AIO follow the form: <username>/feeds/<feedname>
-//Adafruit_MQTT_Publish photocell = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/photocell");
-
-// Setup a feed called 'onoff' for subscribing to changes.
-Adafruit_MQTT_Subscribe onoffbutton = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/motor");
-
-/*************************** Sketch Code ************************************/
-void MQTT_connect() {
-  int8_t ret;
-
-  // Stop if already connected.
-  if (mqtt.connected()) {
-    return;
+    case ARDUINO_EVENT_PROV_CRED_SUCCESS:
+      Serial.println("🎉 Provisioning successful!");
+      break;
   }
-
-  Serial.print("Connecting to MQTT... ");
-  Serial.println(xPortGetCoreID());
-
-  uint8_t retries = 3;
-  while ((ret = mqtt.connect()) != 0) {  // connect will return 0 for connected
-    Serial.println(mqtt.connectErrorString(ret));
-    Serial.println("Retrying MQTT connection in 5 seconds...");
-    mqtt.disconnect();
-    delay(5000);  // wait 5 seconds
-    retries--;
-    if (retries == 0) {
-      // basically die and wait for WDT to reset me
-      while (1)
-        ;
-    }
-  }
-  Serial.println("MQTT Connected!");
 }
 
-void doTaskH(void *pvParameters) {
-  // This is the code which keeps track of the curtains
-  // Its simple logic if the concurrent switch isnt pressed keep running the curtians
-  Serial.print("Task1 running on core ");
-  Serial.println(xPortGetCoreID());
-  for (;;) {
-    if (state == HIGH) {
-      if (digitalRead(rc) == HIGH) {
-        digitalWrite(in3, HIGH);
-        digitalWrite(in4, LOW);
-      } else {
-        digitalWrite(in3, LOW);
-        digitalWrite(in4, LOW);
-      }
-      if (digitalRead(lc) == HIGH) {
-        digitalWrite(in1, LOW);
-        digitalWrite(in2, HIGH);
-      } else {
-        digitalWrite(in1, LOW);
-        digitalWrite(in2, LOW);
-      }
-    }
-
-    if (state == LOW) {
-      if (digitalRead(lo) == HIGH) {
-        digitalWrite(in1, HIGH);
-        digitalWrite(in2, LOW);
-      } else {
-        digitalWrite(in1, LOW);
-        digitalWrite(in2, LOW);
-      }
-      if (digitalRead(ro) == HIGH) {
-        digitalWrite(in3, LOW);
-        digitalWrite(in4, HIGH);
-      } else {
-        digitalWrite(in3, LOW);
-        digitalWrite(in4, LOW);
-      }
+void write_callback(Device *device, Param *param, const param_val_t val, void *priv_data, write_ctx_t *ctx)
+{
+  if (strcmp(device->getDeviceName(), "Curtain") == 0) {
+    if (strcmp(param->getParamName(), "Power") == 0) {
+      curtain_state = val.val.b;
+      Serial.printf("🎛️ Curtain command: %s\n", curtain_state ? "OPEN" : "CLOSE");
+      param->updateAndReport(val);
     }
   }
 }
 
-void doTaskL(void *pvParameters) {
-  // This part keeps track of all the wifi connections
-  Serial.print("Task2 running on core ");
-  Serial.println(xPortGetCoreID());
-  for (;;) {
-    MQTT_connect();
-    Adafruit_MQTT_Subscribe *subscription;
-    while ((subscription = mqtt.readSubscription(5000))) {
-      if (subscription == &onoffbutton) {
-        Serial.print(F("Got: "));
-        Serial.println((char *)onoffbutton.lastread);
-        state = atoi((char *)onoffbutton.lastread);
-      }
-    }
+void debugLimitSwitches() {
+  static unsigned long lastDebug = 0;
+  if (millis() - lastDebug > 2000) {
+    Serial.printf("Limit Switches - LO:%d LC:%d RO:%d RC:%d\n",
+                  digitalRead(lo), digitalRead(lc), digitalRead(ro), digitalRead(rc));
+    lastDebug = millis();
   }
 }
 
-void setup() {
+void stopAllMotors() {
+  // Active-HIGH relay board: LOW = OFF
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
+void setup()
+{
   Serial.begin(115200);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
+  delay(3000);
+
+  Serial.println("\n🚀 ESP32 Curtain Controller Starting...");
+
+
+  pinMode(gpio_reset, INPUT);
+  pinMode(in1, OUTPUT); pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT); pinMode(in4, OUTPUT);
+
   pinMode(lc, INPUT_PULLUP);
-  pinMode(ro, INPUT_PULLUP);
-  pinMode(rc, INPUT_PULLUP);
   pinMode(lo, INPUT_PULLUP);
 
-  Serial.println(F("Adafruit MQTT"));
+  // Note: GPIO34 and GPIO35 are input-only and do not support internal pull-ups
+  pinMode(ro, INPUT);
+  pinMode(rc, INPUT);
 
-  // Connect to WiFi access point.
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(WLAN_SSID);
+  stopAllMotors();
 
-  WiFi.begin(WLAN_SSID, WLAN_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println();
+  WiFi.mode(WIFI_OFF);
+  delay(1000);
 
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  Node my_node = RMaker.initNode("ESP32_Curtain");
+  curtain_switch.addCb(write_callback);
+  my_node.addDevice(curtain_switch);
 
-  // Setup MQTT subscription for onoff feed.
-  mqtt.subscribe(&onoffbutton);
+  RMaker.enableOTA(OTA_USING_PARAMS);
+  RMaker.enableTZService();
+  RMaker.enableSchedule();
 
-  // Start Task L (low priority)
-  xTaskCreatePinnedToCore(doTaskL,
-                          "Task L",
-                          2048,
-                          NULL,
-                          1,
-                          NULL,
-                          //                          pro_cpu);
-                          tskNO_AFFINITY);
+  Serial.println("🌧️ Starting RainMaker...");
+  RMaker.start();
 
-  // Start Task H (low priority)
-  xTaskCreatePinnedToCore(doTaskH,
-                          "Task H",
-                          2048,
-                          NULL,
-                          2,
-                          NULL,
-                          //                          pro_cpu);
-                          tskNO_AFFINITY);
+  WiFi.onEvent(sysProvEvent);
 
-  // Delete "setup and loop" task
-  vTaskDelete(NULL); /* pin task to core 0 */
+  Serial.println("🔵 Starting BLE Provisioning...");
+  WiFiProv.beginProvision(WIFI_PROV_SCHEME_BLE,
+                          WIFI_PROV_SCHEME_HANDLER_FREE_BTDM,
+                          WIFI_PROV_SECURITY_1,
+                          pop,
+                          service_name);
+
+  Serial.println("✅ Setup complete - QR code should appear above!");
+
+  Serial.println("🔧 Initial limit switch states:");
+  Serial.printf("LO(33):%d LC(32):%d RO(35):%d RC(34):%d\n",
+                digitalRead(lo), digitalRead(lc), digitalRead(ro), digitalRead(rc));
 }
 
-void loop() {
+void loop()
+{
+  debugLimitSwitches();
+
+  if (curtain_state != last_curtain_state) {
+    last_curtain_state = curtain_state;
+
+    if (curtain_state) {
+      Serial.println("🔄 Starting to OPEN curtains...");
+    } else {
+      Serial.println("🔄 Starting to CLOSE curtains...");
+    }
+  }
+
+  if (curtain_state) {
+    // OPEN curtains
+
+    // Right motor - stop when RC limit switch is pressed (LOW)
+    if (digitalRead(rc) == HIGH) {
+      digitalWrite(in3, HIGH);  // ON
+      digitalWrite(in4, LOW);   // OFF
+    } else {
+      digitalWrite(in3, LOW);   // OFF
+      digitalWrite(in4, LOW);   // OFF
+    }
+
+    // Left motor - stop when LC limit switch is pressed (LOW)
+    if (digitalRead(lc) == HIGH) {
+      digitalWrite(in1, LOW);   // OFF
+      digitalWrite(in2, HIGH);  // ON
+    } else {
+      digitalWrite(in1, LOW);   // OFF
+      digitalWrite(in2, LOW);   // OFF
+    }
+  }
+  else {
+    // CLOSE curtains
+
+    // Left motor - stop when LO limit switch is pressed (LOW)
+    if (digitalRead(lo) == HIGH) {
+      digitalWrite(in1, HIGH);  // ON
+      digitalWrite(in2, LOW);   // OFF
+    } else {
+      digitalWrite(in1, LOW);   // OFF
+      digitalWrite(in2, LOW);   // OFF
+    }
+
+    // Right motor - stop when RO limit switch is pressed (LOW)
+    if (digitalRead(ro) == HIGH) {
+      digitalWrite(in3, LOW);   // OFF
+      digitalWrite(in4, HIGH);  // ON
+    } else {
+      digitalWrite(in3, LOW);   // OFF
+      digitalWrite(in4, LOW);   // OFF
+    }
+  }
+
+  if (digitalRead(gpio_reset) == LOW) {
+    delay(100);
+    int startTime = millis();
+    while (digitalRead(gpio_reset) == LOW) delay(50);
+    int duration = millis() - startTime;
+
+    if (duration > 10000) {
+      Serial.println("🔄 Factory Reset!");
+      RMakerFactoryReset(2);
+    }
+  }
+
+  delay(100);
 }
