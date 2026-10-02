@@ -11,9 +11,9 @@ The code is designed specific to my curtains as I have 4 sererate curtains for 1
 
 ## Demo Video
 
-[![Watch the ESP Curtain Controller demo on YouTube](https://img.youtube.com/vi/44_s2APVDDs/hqdefault.jpg)](https://www.youtube.com/shorts/44_s2APVDDs)
+[![Watch the ESP Curtain Controller demo on YouTube](https://img.youtube.com/vi/mknOZel5K7s/hqdefault.jpg)](https://www.youtube.com/watch?v=mknOZel5K7s)
 
-[▶ Watch the ESP Curtain Controller demo on YouTube](https://www.youtube.com/shorts/44_s2APVDDs)
+[▶ Watch the ESP Curtain Controller demo on YouTube](https://www.youtube.com/watch?v=mknOZel5K7s)
 
 ![](images/mainimage.jpg)
 
