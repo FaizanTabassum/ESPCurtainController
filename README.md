@@ -9,6 +9,12 @@
   
 The code is designed specific to my curtains as I have 4 sererate curtains for 1 window which made the designing a little complex, however you can easily modify the code to make it run on a single curtain you just have to use 2 limit switches which is easily modifiable in the code.
 
+## Demo Video
+
+[![Watch the ESP Curtain Controller demo on YouTube](https://img.youtube.com/vi/44_s2APVDDs/hqdefault.jpg)](https://www.youtube.com/shorts/44_s2APVDDs)
+
+[▶ Watch the ESP Curtain Controller demo on YouTube](https://www.youtube.com/shorts/44_s2APVDDs)
+
 ![](images/mainimage.jpg)
 
 - I had to design my own custom 3D printed mounts to hold the motors 
