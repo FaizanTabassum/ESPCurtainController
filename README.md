@@ -2,7 +2,7 @@
 
 Connected curtain-control prototype using **ESP RainMaker** on ESP32. The Arduino sketch exposes a RainMaker switch, drives two curtain motors through four output pins, and reads four end-stop inputs.
 
-[Watch the hardware demo](https://www.youtube.com/watch?v=mknOZel5K7s)
+[YouTube Video](https://www.youtube.com/watch?v=mknOZel5K7s)
 
 ![Curtain controller hardware](images/mainimage.jpg)
 
